@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Order Kalender</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <div class="page-container">
+        <div id="welcomeScreen" class="page">
+             <div class="welcome-header"><h1 class="main-title">KALENDER MURAH BANDUNG</h1><p class="motto">solusi mahal bikin kalender murah</p></div>
+             <div class="datetime-container"><div id="clockDisplay" class="clock-display"></div><div id="gregorianDateDisplay" class="date-display"></div><div id="hijriDateDisplay" class="date-display hijri-date"></div></div>
+             <div id="prayerTimesContainer" class="prayer-times-container" style="display: none;"><h3>Jadwal Sholat</h3><div class="prayer-times"><div class="prayer-time"><div class="name">Subuh</div><div class="time" id="fajrTime">-:-</div></div><div class="prayer-time"><div class="name">Dzuhur</div><div class="time" id="dhuhrTime">-:-</div></div><div class="prayer-time"><div class="name">Ashar</div><div class="time" id="asrTime">-:-</div></div><div class="prayer-time"><div class="name">Maghrib</div><div class="time" id="maghribTime">-:-</div></div><div class="prayer-time"><div class="name">Isya</div><div class="time" id="ishaTime">-:-</div></div></div><div id="locationDisplay"></div></div>
+             <div class="welcome-buttons"><button id="adminBtn">Admin</button><button id="pelangganBtn">Pelanggan</button></div>
+        </div>
+
+        <div id="pelangganDashboardPage" class="page hidden">
+            <h2>Menu Pelanggan</h2>
+            <div class="dashboard-buttons">
+                <button class="btn" id="goToCalcPelangganBtn">Kalkulator Harga</button>
+                <button class="btn" id="goToGalleryBtn">Lihat Galeri Desain</button>
+                <button class="btn" id="backToWelcomeBtn">Kembali</button>
+            </div>
+        </div>
+
+        <div id="adminDashboardPage" class="page hidden">
+            <h2>Dasbor Admin</h2>
+            <div class="dashboard-buttons">
+                <button class="btn" id="goToCalcAdminBtn">Kalkulator Admin</button>
+                <button class="btn" id="goToRekapanBtn">Rekapan Order</button>
+                <button class="btn" id="goToBiayaProduksiBtn">Biaya Produksi</button>
+                <button class="btn" id="goToGalleryManagementBtn">Apdet Galery</button>
+                <button class="btn" id="goToUpdateHargaBtn">Update Harga Bahan</button>
+                <button class="btn" id="goToSettingUntungBtn">Setting Keuntungan</button>
+                <button class="btn" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <div id="galleryPage" class="page hidden">
+            <div class="content-wrapper">
+                <div class="content-container">
+                    <div class="header-nav"><button class="back-btn" title="Kembali">←</button><h1>Galeri Desain</h1></div>
+                    <div id="galleryGrid" class="gallery-grid"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="galleryManagementPage" class="page hidden">
+            <div class="content-wrapper">
+                <div class="content-container">
+                    <div class="header-nav"><button class="back-btn" title="Kembali">←</button><h1>Manajemen Galeri</h1></div>
+                    <form id="addGalleryItemForm">
+                        <h3>Tambah Desain Baru</h3>
+                        <div class="form-group">
+                            <label for="galleryItemFile">Pilih File Gambar dari Perangkat</label>
+                            <input type="file" id="galleryItemFile" accept="image/*" required style="padding: 10px; background: #4a637e; border-radius: 5px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="galleryItemTitle">Judul / Deskripsi</label>
+                            <input type="text" id="galleryItemTitle" placeholder="Contoh: Desain Kalender Abstrak 2025" required>
+                        </div>
+                        <button type="submit" class="btn-save">Tambah ke Galeri</button>
+                    </form>
+                    <hr style="border-color: #56708d; margin: 40px 0;">
+                    <h2>Daftar Desain di Galeri</h2>
+                    <div id="galleryManagementList" class="gallery-grid"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="calculatorPage" class="page hidden"><div class="content-wrapper"><div class="content-container" style="max-width: 500px;"><div class="header-nav"><button class="back-btn" title="Kembali">←</button><h1 id="calculatorTitle">Kalkulator</h1></div><form id="kalenderForm"><div class="form-group"><label for="nama">Nama</label><input type="text" id="nama" class="form-input" placeholder="Wajib diisi untuk simpan order"></div><div class="form-group"><label for="ukuran">Ukuran</label><select id="ukuran" class="form-input"><option value="">-- Pilih Ukuran --</option><option value="31x48">31x48</option><option value="48x53">48x53</option><option value="44x64">44x64</option></select></div><div class="form-group"><label for="jumlahPcs">Jumlah Pcs</label><input type="number" id="jumlahPcs" class="form-input" placeholder="Contoh: 500"></div><div class="form-group"><label for="jumlahHalaman">Jumlah Halaman</label><input type="number" id="jumlahHalaman" class="form-input" placeholder="Contoh: 6"></div><div class="form-group"><label for="jenisKertas">Jenis Kertas</label><select id="jenisKertas" class="form-input"><option value="">-- Pilih Jenis Kertas --</option><option value="AP 120 gram">AP 120 gram</option><option value="AP 150 gram">AP 150 gram</option><option value="AP 230 gram">AP 230 gram</option></select></div><div class="form-group"><label for="jenisFinishing">Jenis Finishing</label><select id="jenisFinishing" class="form-input"><option value="jepit">Jepit Kaleng</option><option value="ring">Ring</option><option value="polos">Polos</option></select></div><div class="calc-button-group"><button type="button" id="calculateBtn" class="btn-full">HITUNG</button><button type="button" id="saveOrderBtn" class="btn-full" style="display: none;">💾 Simpan Order</button><button type="button" id="printBtn">🖨️ Cetak Nota</button><button type="button" id="whatsappBtn">🛒 Order via WA</button></div></form><div class="result-section"><div class="result-item"><label>Harga Per Pcs</label><span id="hargaPerPcsResult">Rp 0</span></div><div class="result-item"><label>Harga Total</label><span id="hargaTotalResult">Rp 0</span></div></div></div></div></div>
+        
+        <div id="updateHargaPage" class="page hidden">
+              <div class="content-wrapper">
+                <div class="content-container">
+                    <div class="header-nav">
+                        <button class="back-btn" title="Kembali">←</button>
+                        <h1>Update Harga Bahan</h1>
+                    </div>
+                    <form id="updateHargaForm"></form>
+                </div>
+              </div>
+        </div>
+
+        <div id="settingKeuntunganPage" class="page hidden"><div class="content-wrapper"><div class="content-container"><div class="header-nav"><button class="back-btn" title="Kembali">←</button><h1>Setting Keuntungan</h1></div><form id="settingKeuntunganForm"><div class="form-group"><label for="profitPercentageInput">Persentase Keuntungan untuk Pelanggan (%)</label><input type="number" id="profitPercentageInput" placeholder="Contoh: 90"></div><button type="submit" class="btn-save">Simpan Persentase</button></form></div></div></div>
+        
+        <div id="rekapanPage" class="page hidden"><div class="content-wrapper"><div class="content-container"><div class="header-nav"><button class="back-btn" title="Kembali">←</button><h1>Rekapan Order</h1></div><div id="rekapSummary"></div><div style="overflow-x: auto;"><table class="rekap-table"><thead><tr><th>Nama</th><th>Tanggal</th><th>Status Order</th><th>Total Tagihan</th><th>Telah Bayar</th><th>Sisa</th><th>Keuntungan</th><th>Aksi</th></tr></thead><tbody id="rekapTableBody"></tbody></table></div></div></div></div>
+        
+        <div id="biayaProduksiPage" class="page hidden"><div class="content-wrapper"><div class="content-container"><div class="header-nav"><button class="back-btn" title="Kembali">←</button><h1>Biaya Produksi</h1></div><form id="biayaProduksiForm"><h3>Input Biaya Produksi Baru/Update</h3><div class="form-group"><label for="projectSelect">Pilih Proyek Order Pelanggan</label><select id="projectSelect" required></select></div><div class="form-group"><label for="totalBiayaProduksi">Total Biaya ke Percetakan (Rp)</label><input type="number" id="totalBiayaProduksi" placeholder="Contoh: 4000000" required></div><div class="form-group"><label for="jumlahBayarProduksi">Jumlah Telah Dibayar (Rp)</label><input type="number" id="jumlahBayarProduksi" placeholder="Contoh: 1000000" required></div><button type="submit" class="btn-save">Simpan Biaya</button></form><hr style="border-color: #56708d; margin: 40px 0;"><h2 style="margin-top:0;">Rekapan Biaya Produksi</h2><div style="overflow-x: auto;"><table class="rekap-table"><thead><tr><th>Nama Proyek</th><th>Total Biaya</th><th>Telah Bayar</th><th>Sisa Utang</th><th>Status</th></tr></thead><tbody id="biayaProduksiTableBody"></tbody></table></div></div></div></div>
+    </div>
+    
+    <div id="loginModal" class="modal-overlay"><div class="login-box"><h2>Login Admin</h2><form id="loginForm"><div class="input-group"><input type="text" id="usernameInput" placeholder="Username" required></div><div class="input-group"><input type="password" id="passwordInput" placeholder="Password" required></div><div class="login-buttons"><button type="button" id="loginCancelBtn">Batal</button><button type="submit" id="loginSubmitBtn">Login</button></div></form></div></div>
+    <div id="lightbox" class="modal-overlay hidden" onclick="this.classList.add('hidden')"><img id="lightboxImage" src="" alt="Tampilan diperbesar"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
