@@ -34,6 +34,97 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("updateHargaForm").addEventListener("submit",e=>{e.preventDefault();for(const k in dataHarga.kertas)dataHarga.kertas[k]=parseFloat(document.getElementById(`k_${k}`).value);for(const k in dataHarga.ukuranCetak)dataHarga.ukuranCetak[k]=parseInt(document.getElementById(`c_${k}`).value);for(const k in dataHarga.finishing)dataHarga.finishing[k]=parseFloat(document.getElementById(`f_${k}`).value);dataHarga.lainLain.susun=parseInt(document.getElementById("ll_susun").value);localStorage.setItem("savedDataHarga",JSON.stringify(dataHarga));alert("Harga berhasil disimpan!")});
     
     // --- SISA KODE ---
-    // (Semua logika lain: Setting Keuntungan, Biaya Produksi, Kalkulator, Rekapan, Galeri, dll. tetap sama)
-    const formatRupiah=angka=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",minimumFractionDigits:0}).format(angka),calculateBtn=document.getElementById("calculateBtn"),saveOrderBtn=document.getElementById("saveOrderBtn"),printBtn=document.getElementById("printBtn"),whatsappBtn=document.getElementById("whatsappBtn");printBtn.disabled=!0;whatsappBtn.disabled=!0;saveOrderBtn.disabled=!0;const inputs=document.querySelectorAll(".form-input");inputs.forEach(input=>{input.addEventListener("input",()=>{printBtn.disabled=!0;whatsappBtn.disabled=!0;saveOrderBtn.disabled=!0;hasilKalkulasi=null})});calculateBtn.addEventListener("click",()=>{const nama=document.getElementById("nama").value,ukuran=document.getElementById("ukuran").value,jumlahPcs=parseInt(document.getElementById("jumlahPcs").value)||0,jumlahHalaman=parseInt(document.getElementById("jumlahHalaman").value)||0,jenisKertas=document.getElementById("jenisKertas").value,jenisFinishing=document.getElementById("jenisFinishing").value;if(ukuran&&0<jumlahPcs&&0<jumlahHalaman&&jenisKertas){const dimensi=dataHarga.dimensi[ukuran],hargaCetak=dataHarga.ukuranCetak[ukuran],hargaKertasPerCm2=dataHarga.kertas[jenisKertas];let biayaFinishingSatuan="polos"!==jenisFinishing?dimensi.l*dataHarga.finishing[jenisFinishing]:0;const totalLembar=jumlahPcs*jumlahHalaman,totalBiayaKertas=dimensi.l*dimensi.p*hargaKertasPerCm2*totalLembar,totalBiayaCetak=Math.ceil(totalLembar/2e3)*hargaCetak,totalBiayaFinishing=biayaFinishingSatuan*jumlahPcs,totalBiayaSusun=dataHarga.lainLain.susun*jumlahPcs;grandTotalAsliCache=totalBiayaKertas+totalBiayaCetak+totalBiayaFinishing+totalBiayaSusun;const hargaPerPcsAsli=grandTotalAsliCache/jumlahPcs;let hargaPerPcsFinal=hargaPerPcsAsli*("pelanggan"===userRole?1+profitPercentage/100:1);const grandTotalFinal=hargaPerPcsFinal*jumlahPcs;document.getElementById("hargaPerPcsResult").textContent=formatRupiah(hargaPerPcsFinal);document.getElementById("hargaTotalResult").textContent=formatRupiah(grandTotalFinal);hasilKalkulasi={nama,ukuran,jumlahPcs,jumlahHalaman,jenisKertas,jenisFinishing,hargaPerPcs:hargaPerPcsFinal,grandTotal:grandTotalFinal};printBtn.disabled=!1;whatsappBtn.disabled=!1;"admin"===userRole&&(saveOrderBtn.style.display="block",saveOrderBtn.disabled=!1)}else alert("Mohon lengkapi data!")});saveOrderBtn.addEventListener("click",()=>{if(hasilKalkulasi&&hasilKalkulasi.nama){const namaFinishing={jepit:"Jepit Kaleng",ring:"Ring",polos:"Polos"};orderList.push({id:Date.now(),nama:hasilKalkulasi.nama,tanggal:(new Date).toLocaleDateString("id-ID"),detail:`Kalender ${hasilKalkulasi.jumlahHalaman} hal, ${hasilKalkulasi.ukuran}, ${hasilKalkulasi.jenisKertas}, Fin. ${namaFinishing[hasilKalkulasi.jenisFinishing]}`,hargaTotal:hasilKalkulasi.grandTotal,hargaModal:grandTotalAsliCache,keuntungan:hasilKalkulasi.grandTotal-grandTotalAsliCache,statusPesanan:"Survei",jumlahBayar:0});localStorage.setItem("orderList",JSON.stringify(orderList));alert(`Order untuk ${hasilKalkulasi.nama} berhasil disimpan!`);saveOrderBtn.disabled=!0}else alert("Nama pemesan wajib diisi sebelum menyimpan!")});function populateRekapanTable(){const tableBody=document.getElementById("rekapTableBody"),summaryDiv=document.getElementById("rekapSummary");tableBody.innerHTML="";let totalKeuntungan=0;0===orderList.length?tableBody.innerHTML='<tr><td colspan="8" style="text-align:center;">Belum ada data order.</td></tr>':orderList.forEach(order=>{totalKeuntungan+=order.keuntungan;const sisaBayar=order.hargaTotal-order.jumlahBayar,statusLunas=sisaBayar<=0?"Lunas":"Belum Lunas",row=document.createElement("tr");row.innerHTML=`<td>${order.nama}</td><td>${order.tanggal}</td><td><select class="status-order-select"><option ${"Survei"===order.statusPesanan?"selected":""}>Survei</option><option ${"Desain"===order.statusPesanan?"selected":""}>Desain</option><option ${"Cetak"===order.statusPesanan?"selected":""}>Cetak</option><option ${"Antar"===order.statusPesanan?"selected":""}>Antar</option><option ${"Beres"===order.statusPesanan?"selected":""}>Beres</option></select></td><td>${formatRupiah(order.hargaTotal)}</td><td><input type="number" class="payment-input" value="${order.jumlahBayar}"></td><td>${formatRupiah(sisaBayar)} (${statusLunas})</td><td>${formatRupiah(order.keuntungan)}</td><td><button class="btn-rekap-action btn-rekap-save" data-id="${order.id}">Simpan</button><button class="btn-rekap-action btn-rekap-delete" data-id="${order.id}">Hapus</button></td>`;tableBody.appendChild(row)});summaryDiv.innerHTML=`<div class="summary-box"><h3>Total Keuntungan</h3><p>${formatRupiah(totalKeuntungan)}</p></div>`}document.getElementById("rekapTableBody").addEventListener("click",e=>{const orderId=parseInt(e.target.dataset.id);if(e.target.classList.contains("btn-rekap-save")){const orderIndex=orderList.findIndex(o=>o.id===orderId);-1<orderIndex&&(orderList[orderIndex].statusPesanan=e.target.closest("tr").querySelector(".status-order-select").value,orderList[orderIndex].jumlahBayar=parseFloat(e.target.closest("tr").querySelector(".payment-input").value)||0,localStorage.setItem("orderList",JSON.stringify(orderList)),alert("Perubahan berhasil disimpan!"),populateRekapanTable())}else e.target.classList.contains("btn-rekap-delete")&&confirm("Apakah Anda yakin ingin menghapus order ini secara permanen?")&&(orderList=orderList.filter(o=>o.id!==orderId),localStorage.setItem("orderList",JSON.stringify(orderList)),alert("Order berhasil dihapus."),populateRekapanTable())});function renderBiayaProduksiPage(){const projectSelect=document.getElementById("projectSelect"),tableBody=document.getElementById("biayaProduksiTableBody");projectSelect.innerHTML='<option value="">-- Pilih Proyek --</option>';orderList.forEach(order=>{projectSelect.innerHTML+=`<option value="${order.id}">${order.nama} (${order.tanggal})</option>`});tableBody.innerHTML="";if(0===biayaProduksiList.length)tableBody.innerHTML='<tr><td colspan="5" style="text-align:center;">Belum ada data biaya produksi.</td></tr>';biayaProduksiList.forEach(biaya=>{const order=orderList.find(o=>o.id===biaya.orderId),sisaUtang=biaya.totalBiaya-biaya.jumlahBayar,status=sisaUtang<=0?"Lunas":"Belum Lunas",row=document.createElement("tr");row.innerHTML=`<td>${order?order.nama:"Proyek Dihapus"}</td><td>${formatRupiah(biaya.totalBiaya)}</td><td>${formatRupiah(biaya.jumlahBayar)}</td><td>${formatRupiah(sisaUtang)}</td><td>${status}</td>`;tableBody.appendChild(row)})}document.getElementById("biayaProduksiForm").addEventListener("submit",e=>{e.preventDefault();const orderId=parseInt(document.getElementById("projectSelect").value),totalBiaya=parseFloat(document.getElementById("totalBiayaProduksi").value),jumlahBayar=parseFloat(document.getElementById("jumlahBayarProduksi").value);if(orderId&&!isNaN(totalBiaya)&&!isNaN(jumlahBayar)){const existingIndex=biayaProduksiList.findIndex(b=>b.orderId===orderId);-1<existingIndex?(biayaProduksiList[existingIndex].totalBiaya=totalBiaya,biayaProduksiList[existingIndex].jumlahBayar=jumlahBayar):biayaProduksiList.push({orderId,totalBiaya,jumlahBayar});localStorage.setItem("biayaProduksiList",JSON.stringify(biayaProduksiList));alert("Data biaya produksi berhasil disimpan!");document.getElementById("biayaProduksiForm").reset();renderBiayaProduksiPage()}else alert("Mohon isi semua kolom dengan benar.")});printBtn.addEventListener("click",()=>{hasilKalkulasi&&alert("Fungsi Cetak Nota belum diimplementasikan.")});whatsappBtn.addEventListener("click",()=>{hasilKalkulasi&&alert("Fungsi Order via WA belum diimplementasikan.")});
+    const formatRupiah=angka=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",minimumFractionDigits:0}).format(angka),calculateBtn=document.getElementById("calculateBtn"),saveOrderBtn=document.getElementById("saveOrderBtn"),printBtn=document.getElementById("printBtn"),whatsappBtn=document.getElementById("whatsappBtn");printBtn.disabled=!0;whatsappBtn.disabled=!0;saveOrderBtn.disabled=!0;const inputs=document.querySelectorAll(".form-input");inputs.forEach(input=>{input.addEventListener("input",()=>{printBtn.disabled=!0;whatsappBtn.disabled=!0;saveOrderBtn.disabled=!0;hasilKalkulasi=null})});calculateBtn.addEventListener("click",()=>{const nama=document.getElementById("nama").value,ukuran=document.getElementById("ukuran").value,jumlahPcs=parseInt(document.getElementById("jumlahPcs").value)||0,jumlahHalaman=parseInt(document.getElementById("jumlahHalaman").value)||0,jenisKertas=document.getElementById("jenisKertas").value,jenisFinishing=document.getElementById("jenisFinishing").value;if(ukuran&&0<jumlahPcs&&0<jumlahHalaman&&jenisKertas){const dimensi=dataHarga.dimensi[ukuran],hargaCetak=dataHarga.ukuranCetak[ukuran],hargaKertasPerCm2=dataHarga.kertas[jenisKertas];let biayaFinishingSatuan="polos"!==jenisFinishing?dimensi.l*dataHarga.finishing[jenisFinishing]:0;const totalLembar=jumlahPcs*jumlahHalaman,totalBiayaKertas=dimensi.l*dimensi.p*hargaKertasPerCm2*totalLembar,totalBiayaCetak=Math.ceil(totalLembar/2e3)*hargaCetak,totalBiayaFinishing=biayaFinishingSatuan*jumlahPcs,totalBiayaSusun=dataHarga.lainLain.susun*jumlahPcs;grandTotalAsliCache=totalBiayaKertas+totalBiayaCetak+totalBiayaFinishing+totalBiayaSusun;const hargaPerPcsAsli=grandTotalAsliCache/jumlahPcs;let hargaPerPcsFinal=hargaPerPcsAsli*("pelanggan"===userRole?1+profitPercentage/100:1);const grandTotalFinal=hargaPerPcsFinal*jumlahPcs;document.getElementById("hargaPerPcsResult").textContent=formatRupiah(hargaPerPcsFinal);document.getElementById("hargaTotalResult").textContent=formatRupiah(grandTotalFinal);hasilKalkulasi={nama,ukuran,jumlahPcs,jumlahHalaman,jenisKertas,jenisFinishing,hargaPerPcs:hargaPerPcsFinal,grandTotal:grandTotalFinal,hargaModal:grandTotalAsliCache,keuntungan:hargaPerPcsFinal*jumlahPcs-grandTotalAsliCache};printBtn.disabled=!1;whatsappBtn.disabled=!1;"admin"===userRole&&(saveOrderBtn.style.display="block",saveOrderBtn.disabled=!1)}else alert("Mohon lengkapi data!")});
+
+    // Fungsi untuk mengirim data order ke server
+    async function kirimDataOrderKeServer(dataOrder) {
+        // Ganti URL ini dengan URL API backend Anda (misalnya Google Sheets API atau Firebase)
+        const serverURL = 'https://contoh-api-anda.com/simpan-order';
+
+        try {
+            const response = await fetch(serverURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataOrder),
+            });
+
+            if (response.ok) {
+                console.log('Data order berhasil dikirim ke server.');
+                return true;
+            } else {
+                console.error('Gagal mengirim data order ke server.');
+                return false;
+            }
+        } catch (error) {
+            console.error('Terjadi kesalahan saat mengirim data:', error);
+            return false;
+        }
+    }
+
+    // Fungsi tombol Simpan Order (khusus admin)
+    saveOrderBtn.addEventListener("click", async () => {
+        if (hasilKalkulasi && hasilKalkulasi.nama) {
+            // Logika untuk mengirim data ke server
+            const sukses = await kirimDataOrderKeServer(hasilKalkulasi);
+            
+            if (sukses) {
+                // Jika berhasil, tambahkan ke localStorage juga untuk demo
+                const namaFinishing={jepit:"Jepit Kaleng",ring:"Ring",polos:"Polos"};
+                orderList.push({
+                    id: Date.now(),
+                    nama: hasilKalkulasi.nama,
+                    tanggal: (new Date).toLocaleDateString("id-ID"),
+                    detail: `Kalender ${hasilKalkulasi.jumlahHalaman} hal, ${hasilKalkulasi.ukuran}, ${hasilKalkulasi.jenisKertas}, Fin. ${namaFinishing[hasilKalkulasi.jenisFinishing]}`,
+                    hargaTotal: hasilKalkulasi.grandTotal,
+                    hargaModal: grandTotalAsliCache,
+                    keuntungan: hasilKalkulasi.keuntungan,
+                    statusPesanan: "Survei",
+                    jumlahBayar: 0
+                });
+                localStorage.setItem("orderList", JSON.stringify(orderList));
+
+                alert(`Order untuk ${hasilKalkulasi.nama} berhasil disimpan ke server!`);
+                saveOrderBtn.disabled = true;
+            } else {
+                alert('Gagal menyimpan order. Coba lagi.');
+            }
+        } else {
+            alert("Nama pemesan wajib diisi sebelum menyimpan!");
+        }
+    });
+
+    // Fungsi tombol Order via WA (untuk pelanggan)
+    whatsappBtn.addEventListener("click", async () => {
+        if (hasilKalkulasi) {
+            // Logika untuk mengirim data ke server
+            const sukses = await kirimDataOrderKeServer(hasilKalkulasi);
+
+            if (sukses) {
+                // Jika berhasil, buat pesan WA
+                const pesanWA = `Halo, saya ingin memesan kalender dengan rincian berikut:\n\n` +
+                                `Nama: ${document.getElementById("nama").value || "Pelanggan"}\n` +
+                                `Ukuran: ${hasilKalkulasi.ukuran}\n` +
+                                `Jumlah: ${hasilKalkulasi.jumlahPcs} pcs\n` +
+                                `Harga Total: ${formatRupiah(hasilKalkulasi.grandTotal)}\n\n` +
+                                `Terima kasih.`;
+
+                const nomorAdmin = "628123456789"; // Ganti dengan nomor WhatsApp admin
+                const linkWA = `https://wa.me/${nomorAdmin}?text=${encodeURIComponent(pesanWA)}`;
+                window.open(linkWA, '_blank');
+            } else {
+                alert('Gagal memproses order. Coba lagi.');
+            }
+        } else {
+            alert("Mohon hitung terlebih dahulu!");
+        }
+    });
+
+    // Fungsi lainnya, perbarui jika perlu
+    function populateRekapanTable(){
+        // Dalam implementasi nyata, data akan diambil dari server di sini
+        // fetch('URL_API_ANDA/orders').then(response => response.json()).then(data => { ... });
+        const tableBody=document.getElementById("rekapTableBody"),summaryDiv=document.getElementById("rekapSummary");tableBody.innerHTML="";let totalKeuntungan=0;0===orderList.length?tableBody.innerHTML='<tr><td colspan="8" style="text-align:center;">Belum ada data order.</td></tr>':orderList.forEach(order=>{totalKeuntungan+=order.keuntungan;const sisaBayar=order.hargaTotal-order.jumlahBayar,statusLunas=sisaBayar<=0?"Lunas":"Belum Lunas",row=document.createElement("tr");row.innerHTML=`<td>${order.nama}</td><td>${order.tanggal}</td><td><select class="status-order-select"><option ${"Survei"===order.statusPesanan?"selected":""}>Survei</option><option ${"Desain"===order.statusPesanan?"selected":""}>Desain</option><option ${"Cetak"===order.statusPesanan?"selected":""}>Cetak</option><option ${"Antar"===order.statusPesanan?"selected":""}>Antar</option><option ${"Beres"===order.statusPesanan?"selected":""}>Beres</option></select></td><td>${formatRupiah(order.hargaTotal)}</td><td><input type="number" class="payment-input" value="${order.jumlahBayar}"></td><td>${formatRupiah(sisaBayar)} (${statusLunas})</td><td>${formatRupiah(order.keuntungan)}</td><td><button class="btn-rekap-action btn-rekap-save" data-id="${order.id}">Simpan</button><button class="btn-rekap-action btn-rekap-delete" data-id="${order.id}">Hapus</button></td>`;tableBody.appendChild(row)});summaryDiv.innerHTML=`<div class="summary-box"><h3>Total Keuntungan</h3><p>${formatRupiah(totalKeuntungan)}</p></div>`}}
+    document.getElementById("rekapTableBody").addEventListener("click",e=>{const orderId=parseInt(e.target.dataset.id);if(e.target.classList.contains("btn-rekap-save")){const orderIndex=orderList.findIndex(o=>o.id===orderId);-1<orderIndex&&(orderList[orderIndex].statusPesanan=e.target.closest("tr").querySelector(".status-order-select").value,orderList[orderIndex].jumlahBayar=parseFloat(e.target.closest("tr").querySelector(".payment-input").value)||0,localStorage.setItem("orderList",JSON.stringify(orderList)),alert("Perubahan berhasil disimpan!"),populateRekapanTable())}else e.target.classList.contains("btn-rekap-delete")&&confirm("Apakah Anda yakin ingin menghapus order ini secara permanen?")&&(orderList=orderList.filter(o=>o.id!==orderId),localStorage.setItem("orderList",JSON.stringify(orderList)),alert("Order berhasil dihapus."),populateRekapanTable())});function renderBiayaProduksiPage(){const projectSelect=document.getElementById("projectSelect"),tableBody=document.getElementById("biayaProduksiTableBody");projectSelect.innerHTML='<option value="">-- Pilih Proyek --</option>';orderList.forEach(order=>{projectSelect.innerHTML+=`<option value="${order.id}">${order.nama} (${order.tanggal})</option>`});tableBody.innerHTML="";if(0===biayaProduksiList.length)tableBody.innerHTML='<tr><td colspan="5" style="text-align:center;">Belum ada data biaya produksi.</td></tr>';biayaProduksiList.forEach(biaya=>{const order=orderList.find(o=>o.id===biaya.orderId),sisaUtang=biaya.totalBiaya-biaya.jumlahBayar,status=sisaUtang<=0?"Lunas":"Belum Lunas",row=document.createElement("tr");row.innerHTML=`<td>${order?order.nama:"Proyek Dihapus"}</td><td>${formatRupiah(biaya.totalBiaya)}</td><td>${formatRupiah(biaya.jumlahBayar)}</td><td>${formatRupiah(sisaUtang)}</td><td>${status}</td>`;tableBody.appendChild(row)})}document.getElementById("biayaProduksiForm").addEventListener("submit",e=>{e.preventDefault();const orderId=parseInt(document.getElementById("projectSelect").value),totalBiaya=parseFloat(document.getElementById("totalBiayaProduksi").value),jumlahBayar=parseFloat(document.getElementById("jumlahBayarProduksi").value);if(orderId&&!isNaN(totalBiaya)&&!isNaN(jumlahBayar)){const existingIndex=biayaProduksiList.findIndex(b=>b.orderId===orderId);-1<existingIndex?(biayaProduksiList[existingIndex].totalBiaya=totalBiaya,biayaProduksiList[existingIndex].jumlahBayar=jumlahBayar):biayaProduksiList.push({orderId,totalBiaya,jumlahBayar});localStorage.setItem("biayaProduksiList",JSON.stringify(biayaProduksiList));alert("Data biaya produksi berhasil disimpan!");document.getElementById("biayaProduksiForm").reset();renderBiayaProduksiPage()}else alert("Mohon isi semua kolom dengan benar.")});printBtn.addEventListener("click",()=>{hasilKalkulasi&&alert("Fungsi Cetak Nota belum diimplementasikan.")});
 });
